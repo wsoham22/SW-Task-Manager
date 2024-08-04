@@ -1,10 +1,12 @@
 const express = require("express");
-const app = express();
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 require('dotenv').config();
+
+// Initialize Express app
+const app = express();
 
 // Middleware
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -44,21 +46,19 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
-// Home Page
+// Routes
 app.get('/', (req, res) => {
-    res.end("This is the home page!");
+    res.send("This is the home page!");
 });
+
 const taskRouter = require("./routes/taskroutes"); // Replace with the actual path to your task router file
-app.use('/api',taskRouter);
-// Mount the task router at a specific path
-// app.post('/createtask', taskRouter);
-// app.get('/gettasks',taskRouter);
-// app.get('/gettask/:id',taskRouter);
+app.use('/api', taskRouter);
+
 // User Registration (Signup)
 app.post('/signup', async (req, res) => {
     try {
         const { name, email, password, confirmPassword } = req.body;
-        if (!name || !email ||!password === "") {
+        if (!name || !email || !password || password === "") {
             return res.status(400).json({ error: 'Enter valid credentials!' });
         }
 
@@ -83,12 +83,13 @@ app.post('/signup', async (req, res) => {
         await user.save();
 
         // Return a success response
-        res.status(201).json({ message: 'User registered successfully' }).then(console.log("User registered successfully!"));
+        res.status(201).json({ message: 'User registered successfully' });
+        console.log("User registered successfully!");
     } catch (error) {
         console.error('Error during registration:', error);
         res.status(500).json({ error: 'Internal Server Error' });
-    };
-})
+    }
+});
 
 // User Login
 app.post('/login', async (req, res) => {
@@ -116,21 +117,20 @@ app.post('/login', async (req, res) => {
 
         // Generate and send a JWT token for authentication
         const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-        console.log("User logged!");
-        // Redirect to the /dashboard route
-        res.redirect('/dashboard');
-        // Alternatively, you can send the token in the response if needed
-        // res.json({ token });
+        console.log("User logged in!");
+        res.json({ token });
     } catch (error) {
         console.error('Error during login:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
+
 // Dashboard Route
 app.get('/dashboard', (req, res) => {
     // Handle logic for the /dashboard route
-    res.end("This is the dashboard!");
+    res.send("This is the dashboard!");
 });
+
 // Server
 const PORT = 5000;
 app.listen(PORT, () => {
